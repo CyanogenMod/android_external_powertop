@@ -199,12 +199,33 @@ static void load_board_params()
 	string boardname;
 	char filename[4096];
 
-	boardname = read_sysfs_string("/etc/boardname");
+	if (access("/etc/boardname", R_OK ) == 0){
+		boardname = read_sysfs_string("/etc/boardname");
 
-	if (boardname.length() < 2)
+		if (boardname.length() < 2)
+			return;
+
+		sprintf(filename, "/var/cache/powertop/saved_parameters.powertop.%s", boardname.c_str());
+	}
+	else if (access("/data", R_OK ) == 0){
+		FILE *fp;
+		char data[512];
+		fp = popen("getprop ro.build.product","r");
+
+		if(!fp){
+			fprintf(stderr, "Could not open pipe for output.\n");
+			return;
+		}
+
+		if (fgets(data, 512 , fp)== NULL)
+			return;
+
+		pclose(fp);
+
+		sprintf(filename, "/data/local/powertop/saved_parameters.powertop.%s", data);
+	}
+	else
 		return;
-
-	sprintf(filename, "/var/cache/powertop/saved_parameters.powertop.%s", boardname.c_str());
 
 	if (access(filename, R_OK))
 		return;
