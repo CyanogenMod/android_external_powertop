@@ -33,6 +33,9 @@
 #define BIT64 1 
 #endif
 
+#define TRUE	1
+#define FALSE	0
+
 /*
 Need to collect
  * CPU time consumed by each application
