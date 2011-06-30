@@ -39,6 +39,14 @@ class abstract_cpu;
 #define LEVEL_C0 -1
 #define LEVEL_HEADER -2
 
+
+struct thread_sibling_info {
+	unsigned int cpunum;
+	vector <unsigned int> thread_siblings;
+};
+
+extern vector < struct thread_sibling_info * > thread_sibling_table;
+
 struct idle_state {
 	char linux_name[16]; /* state0 etc.. cpuidle name */
 	char human_name[32];

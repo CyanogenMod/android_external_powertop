@@ -44,6 +44,7 @@
 #include "../parameters/parameters.h"
 #include "../display.h"
 #include "../measurement/measurement.h"
+#include "../cpu/cpu.h"
 
 static  class perf_bundle * perf_events;
 
@@ -147,6 +148,28 @@ static void change_blame(unsigned int cpu, class power_consumer *consumer, int l
 	cpu_level[cpu] = level;
 }
 
+static bool sibling_wakeup_pending(unsigned int cpu)
+{
+	unsigned int i,j;
+	struct thread_sibling_info *info;
+	bool wakeup_pending = TRUE;
+
+	for (i = 0; i < thread_sibling_table.size(); i++) {
+		info = thread_sibling_table[i];
+		if (cpu != info->cpunum)
+			continue;
+
+		for (j = 0; j < info->thread_siblings.size(); j++) {
+			if (!get_wakeup_pending(info->thread_siblings[j])){
+				wakeup_pending = FALSE;
+				break;
+			}
+		}
+	}
+
+	return wakeup_pending;
+}
+
 static void consume_blame(unsigned int cpu)
 {
 	if (!get_wakeup_pending(cpu))
@@ -156,6 +179,8 @@ static void consume_blame(unsigned int cpu)
 	if (cpu_blame.size() <= cpu)
 		return;
 	if (!cpu_blame[cpu])
+		return;
+	if (!sibling_wakeup_pending(cpu))
 		return;
 
 	cpu_blame[cpu]->wake_ups++;

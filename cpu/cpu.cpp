@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ncurses.h>
+#include <sstream>
 
 #include "cpu.h"
 #include "cpudevice.h"
@@ -38,12 +39,15 @@
 #include "../display.h"
 #include "../html.h"
 
+using namespace std;
+
 static class abstract_cpu system_level;
 
 vector<class abstract_cpu *> all_cpus;
 
 static	class perf_bundle * perf_events;
 
+vector < struct thread_sibling_info * > thread_sibling_table;
 
 
 class perf_power_bundle: public perf_bundle
@@ -157,6 +161,7 @@ static void handle_one_cpu(unsigned int number, char *vendor, int family, int mo
 	unsigned int package_number = 0;
 	unsigned int core_number = 0;
 	class abstract_cpu *package, *core, *cpu;
+	vector <unsigned int> thread_siblings;
 
 	sprintf(filename, "/sys/devices/system/cpu/cpu%i/topology/core_id", number);
 	file.open(filename, ios::in);
@@ -174,6 +179,29 @@ static void handle_one_cpu(unsigned int number, char *vendor, int family, int mo
 		file.close();
 	}
 
+	sprintf(filename, "/sys/devices/system/cpu/cpu%i/topology/thread_siblings_list", number);
+	file.open(filename, ios::in);
+	if (file) {
+		string line;
+		getline(file,line);
+		istringstream linestream(line);
+		string item;
+		struct thread_sibling_info *info;
+
+		while (getline (linestream, item, '-')){
+			thread_siblings.push_back(atoi(item.c_str()));
+		}
+
+		if (thread_siblings.size() > 1){
+			info = new struct thread_sibling_info;
+			info->cpunum = number;
+			info->thread_siblings = thread_siblings;
+			thread_sibling_table.push_back(info);
+		}
+
+		file.close();
+
+	}
 
 	if (system_level.children.size() <= package_number)
 		system_level.children.resize(package_number + 1, NULL);
