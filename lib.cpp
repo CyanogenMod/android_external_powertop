@@ -35,10 +35,11 @@
 #include <stdbool.h>
 #include <math.h>
 #include <stdlib.h>
-
+#ifndef DISABLE_PCI
 extern "C" {
 #include <pci/pci.h>
 }
+#endif
 
 #include "lib.h"
 
@@ -243,7 +244,7 @@ void format_watts(double W, char *buffer, unsigned int len)
 #endif	
 }
 
-
+#ifndef DISABLE_PCI
 static struct pci_access *pci_access;
 
 char *pci_id_to_name(uint16_t vendor, uint16_t device, char *buffer, int len)
@@ -267,7 +268,7 @@ void end_pci_access(void)
 	if (pci_access)
 		pci_free_name_list(pci_access);
 }
-
+#endif //DISABLE_PCI
 int utf_ok = -1;
 
 

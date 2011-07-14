@@ -261,7 +261,9 @@ void html_report(int time, bool file)
 	learn_parameters(50, 0);
 	save_all_results("saved_results.powertop");
 	save_parameters("saved_parameters.powertop");
+#ifndef DISABLE_PCI
 	end_pci_access();
+#endif
 	exit(0);
 }
 
@@ -370,7 +372,9 @@ int main(int argc, char **argv)
 	if (debug_learning) {
 	        learn_parameters(1000, 1);
 		dump_parameter_bundle();
+#ifndef DISABLE_PCI
 		end_pci_access();
+#endif
 		exit(0);
 	}
 
@@ -404,7 +408,9 @@ int main(int argc, char **argv)
 	save_parameters("saved_parameters.powertop");
 	learn_parameters(500, 0);
 	save_parameters("saved_parameters.powertop");
+#ifndef DISABLE_PCI
 	end_pci_access();
+#endif
 	reset_display();
 
 	return 0;

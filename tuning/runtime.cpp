@@ -48,6 +48,7 @@ runtime_tunable::runtime_tunable(const char *path, const char *bus, const char *
 	if (!device_has_runtime_pm(path))
 		sprintf(desc, _("%s device %s has no runtime power management"), bus, dev);
 
+#ifndef DISABLE_PCI
 	if (strcmp(bus, "pci") == 0) {
 		char filename[4096];
 		uint16_t vendor = 0, device = 0;
@@ -77,6 +78,7 @@ runtime_tunable::runtime_tunable(const char *path, const char *bus, const char *
 
 		
 	}
+#endif//DISABLE_PCI
 }
 
 int runtime_tunable::good_bad(void)

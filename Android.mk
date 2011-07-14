@@ -4,7 +4,6 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := debug
 LOCAL_SHARED_LIBRARIES := libstlport \
 			  libnl \
-			  libpci \
 
 LOCAL_MODULE := powertop
 
@@ -13,6 +12,12 @@ LOCAL_MODULE := powertop
 LOCAL_CPPFLAGS += -DDISABLE_NCURSES -DDISABLE_I18N -DDISABLE_TRYCATCH
 
 LOCAL_C_INCLUDES += external/stlport/stlport/ external/stlport/stlport/stl external/stlport/stlport/using/h/  bionic external/libnl/include/
+
+ifneq ($(TARGET_ARCH),arm)
+LOCAL_SHARED_LIBRARIES += libpci
+else #TARGET_ARCH != arm
+LOCAL_CPPFLAGS += -DDISABLE_PCI
+endif #TARGET_ARCH == arm
 
 LOCAL_SRC_FILES += \
 	parameters/parameters.cpp \

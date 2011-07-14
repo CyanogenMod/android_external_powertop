@@ -200,7 +200,7 @@ static void do_bus(const char *bus)
 			continue;
 
 		dev = new class runtime_pmdevice(entry->d_name, filename);
-
+#ifndef DISABLE_PCI
 		if (strcmp(bus, "pci") == 0) {
 			uint16_t vendor = 0, device = 0;
 
@@ -226,6 +226,7 @@ static void do_bus(const char *bus)
 				dev->set_human_name(devname);
 			}
 		}
+#endif//DISABLE_PCI
 		all_devices.push_back(dev);
 	}
 	closedir(dir);
