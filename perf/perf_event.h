@@ -51,6 +51,9 @@
 #if __x86_64__
 #define __NR_perf_event_open	298
 #endif
+#if __arm__
+#define __NR_perf_event_open	364
+#endif
 #endif
 
 
