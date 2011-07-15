@@ -1,17 +1,32 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_MODULE_TAGS := debug
+LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES := libstlport \
-			  libnl \
+			  libnl
+
+LOCAL_STATIC_LIBRARIES := libncurses
 
 LOCAL_MODULE := powertop
 
 #LOCAL_CFLAGS += -Wall -O2 -g -fno-omit-frame-pointer -fstack-protector -Wshadow -Wformat -D_FORTIFY_SOURCE=2
 #LOCAL_CPPFLAGS += -Wall -O2 -g -fno-omit-frame-pointer
-LOCAL_CPPFLAGS += -DDISABLE_NCURSES -DDISABLE_I18N -DDISABLE_TRYCATCH
+LOCAL_CPPFLAGS += \
+		-DDISABLE_I18N \
+		-DDISABLE_TRYCATCH \
+		-DNCURSES_NOMACROS \
+		-DDISABLE_WSTRING \
+		-DDEFAULT_TERM=\"xterm\" \
 
-LOCAL_C_INCLUDES += external/stlport/stlport/ external/stlport/stlport/stl external/stlport/stlport/using/h/  bionic external/libnl/include/
+LOCAL_C_INCLUDES += external/stlport/stlport/ \
+					external/stlport/stlport/stl \
+					external/stlport/stlport/using/h/ \
+					bionic \
+					external/libnl/include/ \
+					external/ncurses \
+					external/ncurses/lib \
+					external/ncurses/include \
+					external/ncurses/include/ncurses
 
 ifneq ($(TARGET_ARCH),arm)
 LOCAL_SHARED_LIBRARIES += libpci

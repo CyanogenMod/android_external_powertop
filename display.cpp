@@ -84,8 +84,11 @@ void reset_display(void)
 	keypad(stdscr, FALSE);
 	echo();
 	nocbreak();
-	
+#ifndef NCURSES_NOMACROS
 	resetterm();
+#else
+	reset_shell_mode();
+#endif
 }
 
 

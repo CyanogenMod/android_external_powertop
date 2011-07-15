@@ -280,6 +280,11 @@ int main(int argc, char **argv)
 	bindtextdomain ("powertop", "/usr/share/locale");
 	textdomain ("powertop");
 #endif
+
+#ifdef DEFAULT_TERM
+	if (!getenv("TERM"))
+	  setenv("TERM", DEFAULT_TERM, 1);
+#endif
 	uid = getuid();
 
 	if (uid != 0) {

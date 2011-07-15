@@ -720,7 +720,9 @@ void process_update_display(void)
 		if (!show_power)
 			strcpy(power, "          ");
 		sprintf(name, "%s", all_power[i]->type());
+#ifndef DISABLE_WSTRING
 		while (mbstowcs(NULL,name,0) < 14) strcat(name, " ");
+#endif
 
 
 		if (all_power[i]->events() == 0 && all_power[i]->usage() == 0 && all_power[i]->Witts() == 0)
@@ -733,7 +735,9 @@ void process_update_display(void)
 			else
 				sprintf(usage, "%5i%s", (int)all_power[i]->usage(), all_power[i]->usage_units());
 		}
+#ifndef DISABLE_WSTRING
 		while (mbstowcs(NULL,usage,0) < 14) strcat(usage, " ");
+#endif
 		sprintf(events, "%5.1f", all_power[i]->events());
 		if (!all_power[i]->show_events())
 			events[0] = 0;
