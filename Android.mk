@@ -17,6 +17,7 @@ LOCAL_CPPFLAGS += \
 		-DNCURSES_NOMACROS \
 		-DDISABLE_WSTRING \
 		-DDEFAULT_TERM=\"xterm\" \
+		-DTERMINFO_PATH=\"/system/etc/terminfo\" \
 
 LOCAL_C_INCLUDES += external/stlport/stlport/ \
 					external/stlport/stlport/stl \

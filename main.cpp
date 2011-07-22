@@ -285,6 +285,12 @@ int main(int argc, char **argv)
 	if (!getenv("TERM"))
 	  setenv("TERM", DEFAULT_TERM, 1);
 #endif
+
+#ifdef TERMINFO_PATH
+	if (!getenv("TERMINFO"))
+		setenv("TERMINFO", TERMINFO_PATH, 1);
+#endif
+
 	uid = getuid();
 
 	if (uid != 0) {
