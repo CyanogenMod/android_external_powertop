@@ -1,6 +1,16 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
+CSSTOH_SOURCE := $(LOCAL_PATH)/csstoh.c
+POWERTOP_CSS_SOURCE := $(LOCAL_PATH)/powertop.css
+GEN_CSSTOH := $(LOCAL_PATH)/csstoh
+GEN_CSS_H := $(LOCAL_PATH)/css.h
+$(GEN_CSS_H):
+	$(CC) -o $(GEN_CSSTOH) $(CSSTOH_SOURCE)
+	./$(GEN_CSSTOH) $(POWERTOP_CSS_SOURCE) $@
+
+LOCAL_GENERATED_SOURCES += $(GEN_CSS_H)
+
 LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES := libstlport \
 			  libnl
@@ -89,14 +99,4 @@ LOCAL_SRC_FILES += \
 	lib.cpp \
 
 include $(BUILD_EXECUTABLE)
-
-CSSTOH_SOURCE := $(LOCAL_PATH)/csstoh.c
-POWERTOP_CSS_SOURCE := $(LOCAL_PATH)/powertop.css
-GEN_CSSTOH := $(LOCAL_PATH)/csstoh
-GEN_CSS_H := $(LOCAL_PATH)/css.h
-$(GEN_CSS_H):
-	$(CC) -o $(GEN_CSSTOH) $(CSSTOH_SOURCE)
-	./$(GEN_CSSTOH) $(POWERTOP_CSS_SOURCE) $@
-
-LOCAL_GENERATED_SOURCES += $(GEN_CSS_H)
 
