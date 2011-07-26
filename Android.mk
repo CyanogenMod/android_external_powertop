@@ -28,6 +28,7 @@ LOCAL_CPPFLAGS += \
 		-DDISABLE_WSTRING \
 		-DDEFAULT_TERM=\"xterm\" \
 		-DTERMINFO_PATH=\"/system/etc/terminfo\" \
+		-DDEFINE_ETHTOOL_CMD \
 
 LOCAL_C_INCLUDES += external/stlport/stlport/ \
 					external/stlport/stlport/stl \
