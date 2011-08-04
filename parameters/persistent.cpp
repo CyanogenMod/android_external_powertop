@@ -43,7 +43,7 @@ void save_all_results(const char *filename)
 
 	file.open(pathname, ios::out);
 	if (!file) {
-		cout << _("Cannot save to file ") << pathname << "\n";
+		cout << _("Cannot save all results to file ") << pathname << "\n";
 		return;
 	}
 	for (i = 0; i < past_results.size(); i++) {	
@@ -74,8 +74,9 @@ void load_results(const char *filename)
 	pathname = get_param_directory(filename);
 
 	file.open(pathname, ios::in);
-	if (!file) {
-		cout << _("Cannot load from file ") << pathname << "\n";
+
+	if (!file.is_open()) {
+		cout << _("Cannot load results from file ") << pathname << "\n";
 		return;
 	}
 
@@ -136,7 +137,7 @@ void save_parameters(const char *filename)
 
 	file.open(pathname, ios::out);
 	if (!file) {
-		cout << _("Cannot save to file ") << pathname << "\n";
+		cout << _("Cannot save parameters to file ") << pathname << "\n";
 		return;
 	}
 	
@@ -160,8 +161,8 @@ void load_parameters(const char *filename)
 	pathname = get_param_directory(filename);
 
 	file.open(pathname, ios::in);
-	if (!file) {
-		cout << _("Cannot load from file ") << pathname << "\n";
+	if (!file.is_open()) {
+		cout << _("Cannot load parameters from file ") << pathname << "\n";
 		return;
 	}
 
