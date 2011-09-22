@@ -276,6 +276,16 @@ void enumerate_cpus(void)
 				number = strtoull(c, NULL, 10);
 			}
 		}
+		if (strncmp(line, "Processor\t",10) == 0) {
+			char *c;
+			c = strchr(line, ':');
+			if (c) {
+				c++;
+				if (*c == ' ')
+					c++;
+				strncpy(vendor,c, 127);
+			}
+		}
 		if (strncmp(line, "cpu family\t",11) == 0) {
 			char *c;
 			c = strchr(line, ':');
