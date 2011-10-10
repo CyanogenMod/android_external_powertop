@@ -29,11 +29,18 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include <ncurses.h>
 #include <time.h>
-#include <wchar.h>
-
 #include "powertop.h"
+
+#ifndef NO_NCURSES
+#include <ncurses.h>
+#include <wchar.h>
+#endif
+
+
+#ifdef NO_NCURSES
+#define WINDOW void
+#endif
 
 static WINDOW *title_bar_window;
 static WINDOW *cstate_window;
@@ -43,7 +50,23 @@ static WINDOW *timerstat_window;
 static WINDOW *suggestion_window;
 static WINDOW *status_bar_window;
 
+#ifndef NO_NCURSES
 #define print(win, y, x, fmt, args...) do { if (dump) printf(fmt, ## args); else mvwprintw(win, y, x, fmt, ## args); } while (0)
+
+#else
+
+#define print(win, y, x, fmt, args...) do { printf(fmt, ## args); } while (0)
+#define endwin(x)
+#define delwin(x)
+#define werase(x)
+#define wrefresh(x) printf("\n")
+#define wattron(x, y)
+#define wattroff(x, y)
+#define wbkgd(x, y)
+#define wattrset(x, y)
+#define COLOR_PAIR(x)
+
+#endif
 
 char status_bar_slots[10][40];
 
@@ -91,6 +114,7 @@ int maxwidth = 200;
 
 void setup_windows(void) 
 {
+#ifndef NO_NCURSES
 	getmaxyx(stdscr, maxy, maxx);
 
 	zap_windows();	
@@ -110,10 +134,12 @@ void setup_windows(void)
 
 	werase(stdscr);
 	refresh();
+#endif
 }
 
 void initialize_curses(void) 
 {
+#ifndef NO_NCURSES
 	initscr();
 	start_color();
 	keypad(stdscr, TRUE);	/* enable keyboard mapping */
@@ -133,6 +159,7 @@ void initialize_curses(void)
 	init_pair(PT_COLOR_BRIGHT, COLOR_WHITE, COLOR_BLACK);
 	
 	atexit(cleanup_curses);
+#endif
 }
 
 void show_title_bar(void) 
@@ -143,7 +170,9 @@ void show_title_bar(void)
 	wbkgd(title_bar_window, COLOR_PAIR(PT_COLOR_HEADER_BAR));   
 	werase(title_bar_window);
 
-	print(title_bar_window, 0, 0,  "     PowerTOP version 1.11      (C) 2007 Intel Corporation");
+	/*
+	 print(title_bar_window, 0, 0,  "     PowerTOP version 1.11      (C) 2007 Intel Corporation");
+	 */
 
 	wrefresh(title_bar_window);
 
@@ -154,7 +183,7 @@ void show_title_bar(void)
 		if (strlen(status_bar_slots[i])==0)
 			continue;
 		wattron(status_bar_window, A_REVERSE);
-		print(status_bar_window, 0, x, status_bar_slots[i]);
+		print(status_bar_window, 0, x, "%s", status_bar_slots[i]);
 		wattroff(status_bar_window, A_REVERSE);			
 		x+= strlen(status_bar_slots[i])+1;
 	}
@@ -188,6 +217,13 @@ void show_cstates(void)
 	wrefresh(cstate_window);
 }
 
+void show_msm_pm_stats(void)
+{
+	int i = 0;
+	for (i=0; i < 12; i++)
+		print(cstate_window, i, 38, "%s", msm_pm_stat_lines[i]);
+	wrefresh(cstate_window);
+}
 
 void show_acpi_power_line(double rate, double cap, double capdelta, time_t ti)
 {

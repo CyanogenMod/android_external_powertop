@@ -30,7 +30,6 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include <libintl.h>
 #include <ctype.h>
 #include <assert.h>
 #include <locale.h>
@@ -39,7 +38,7 @@
 
 #include "powertop.h"
 
-#define VERSION "1.11"
+#define VERSION "1.11-1"
 
 uint64_t start_usage[8], start_duration[8];
 uint64_t last_usage[8], last_duration[8];
@@ -55,6 +54,7 @@ static int maxcstate = 0;
 int topcstate = 0;
 
 int dump = 0;
+int reset_pm_stats = 0;
 
 #define IRQCOUNT 150
 
@@ -469,6 +469,17 @@ void start_timerstats(void)
 	fclose(file);
 }
 
+void reset_msm_pm_stats(void)
+{
+	FILE *file;
+	file = fopen("/proc/msm_pm_stats", "w");
+	if (!file)
+		return;
+	fprintf(file, "reset\n");
+	fclose(file);
+}
+
+
 int line_compare (const void *av, const void *bv)
 {
 	const struct line	*a = av, *b = bv;
@@ -764,6 +775,7 @@ void usage()
 	printf(_("Usage: powertop [OPTION...]\n"));
 	printf(_("  -d, --dump            read wakeups once and print list of top offenders\n"));
 	printf(_("  -t, --time=DOUBLE     default time to gather data in seconds\n"));
+	printf(_("  -r, --reset           Reset PM stats data\n"));
 	printf(_("  -h, --help            Show this help message\n"));
 	printf(_("  -v, --version         Show version information and exit\n"));
 	exit(0);
@@ -791,13 +803,15 @@ int main(int argc, char **argv)
  		static struct option opts[] = {
  			{ "dump", 0, NULL, 'd' },
  			{ "time", 1, NULL, 't' },
+			{ "reset", 0, NULL, 'r' },
+			{ "pids", 0, NULL, 'p' },
  			{ "help", 0, NULL, 'h' },
  			{ "version", 0, NULL, 'v' },
  			{ 0, 0, NULL, 0 }
  		};
  		int index2 = 0, c;
  		
- 		c = getopt_long(argc, argv, "dt:hv", opts, &index2);
+		c = getopt_long(argc, argv, "dt:rphv", opts, &index2);
  		if (c == -1)
  			break;
  		switch (c) {
@@ -807,6 +821,12 @@ int main(int argc, char **argv)
  		case 't':
  			ticktime = strtod(optarg, NULL);
  			break;
+		case 'r':
+			reset_pm_stats = 1;
+			break;
+		case 'p':
+			showpids = 1;
+			break;
  		case 'h':
  			usage();
  			break;
@@ -858,9 +878,17 @@ int main(int argc, char **argv)
 
 
 		FD_ZERO(&rfds);
+#ifndef NO_NCURSES
+		/* Do not check for stdin (fd: 0)
+		 * This would cause select to return immediately
+		 * when the USB is re-attached on ADB shell.
+		 */
 		FD_SET(0, &rfds);
+#endif
 		tv.tv_sec = ticktime;
 		tv.tv_usec = (ticktime - tv.tv_sec) * 1000000;;
+		if (reset_pm_stats)
+			reset_msm_pm_stats();
 		do_proc_irq();
 		start_timerstats();
 
@@ -871,6 +899,7 @@ int main(int argc, char **argv)
 
 
 		stop_timerstats();
+		msm_pm_stats();
 		clear_lines();
 		do_proc_irq();
 		read_data(&cur_usage[0], &cur_duration[0]);
@@ -929,6 +958,7 @@ int main(int argc, char **argv)
 		}
 		do_cpufreq_stats();
 		show_cstates();
+		show_msm_pm_stats();
 		/* now the timer_stats info */
 		memset(line, 0, sizeof(line));
 		totalticks = 0;
@@ -1035,29 +1065,41 @@ int main(int argc, char **argv)
 		else
 			ticktime = 45;
 
+
 		if (key) {
 			char keychar;
 			int keystroke = fgetc(stdin);
+#ifndef NO_NCURSES
+			/* Do not handle EOF when not using ncurses as
+			 * the shell would pass the EOF to the app causing
+			 * it to stop.
+			 */
 			if (keystroke == EOF)
 				exit(EXIT_SUCCESS);
+#endif
 
 			keychar = toupper(keystroke);
 			if (keychar == 'Q')
 				exit(EXIT_SUCCESS);
 			if (keychar == 'R')
 				ticktime = 3;
+#ifndef NO_SUGGESTIONS
 			if (keychar == suggestion_key && suggestion_activate) {
 				suggestion_activate();
 				ticktime = 2;
 				displaytime = -1.0;
 			} else
+#endif
 			if (keychar == 'P')
 				showpids = !showpids;
+
 		}
 
 		if (wakeups_per_second < 0)
 			ticktime = 2;
 
+
+#ifndef NO_SUGGESTIONS
 		reset_suggestions();
 
 		suggest_kernel_config("CONFIG_USB_SUSPEND", 1,
@@ -1143,18 +1185,24 @@ int main(int argc, char **argv)
 		suggest_writeback_time();
 		suggest_usb_autosuspend();
 		usb_activity_hint();
-
+#endif
 		if (dump) {
+#ifndef NO_SUGGESTIONS
 			print_all_suggestions();
 			display_usb_activity();
+#endif
 			exit(EXIT_SUCCESS);
 		}
 
+#ifndef NO_SUGGESTIONS
 		if (!key)
 			pick_suggestion();
+#endif
+#ifndef NO_NCURSES
 		show_title_bar();
-
+#endif
 		fflush(stdout);
+
 		if (!key && ticktime >= 4.8) {	/* quiet down the effects of any IO to xterms */
 			FD_ZERO(&rfds);
 			FD_SET(0, &rfds);

@@ -26,7 +26,7 @@
 #ifndef __INCLUDE_GUARD_POWERTOP_H_
 #define __INCLUDE_GUARD_POWERTOP_H_
 
-#include <libintl.h>
+#include "gettext.h"
 
 struct line {
 	char	*string;
@@ -66,7 +66,7 @@ void usb_activity_hint(void);
 
 extern char cstate_lines[12][200];
 extern char cpufreqstrings[6][80];
-
+extern char msm_pm_stat_lines[12][200];
 extern int topcstate;
 extern int topfreq;  
 extern int dump;
@@ -107,6 +107,7 @@ void show_pmu_power_line(unsigned sum_voltage_mV,
                          unsigned sum_charge_mAh, unsigned sum_max_charge_mAh,
                          int sum_discharge_mA);
 void show_cstates(void);
+void show_msm_pm_stats(void);
 void show_wakeups(double d, double interval, double c0time);
 void show_timerstats(int nostats, int ticktime);
 void show_suggestion(char *sug);
@@ -123,6 +124,7 @@ void count_usb_urbs(void);
 void display_usb_activity(void);
 void activate_usb_autosuspend(void);
 void print_intel_cstates(void);
+void msm_pm_stats(void);
 
 
 #endif
