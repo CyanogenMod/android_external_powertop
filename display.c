@@ -170,9 +170,9 @@ void show_title_bar(void)
 	wbkgd(title_bar_window, COLOR_PAIR(PT_COLOR_HEADER_BAR));   
 	werase(title_bar_window);
 
-	/*
-	 print(title_bar_window, 0, 0,  "     PowerTOP version 1.11      (C) 2007 Intel Corporation");
-	 */
+       /*
+         print(title_bar_window, 0, 0,  "     PowerTOP version 1.11      (C) 2007 Intel Corporation");
+        */
 
 	wrefresh(title_bar_window);
 
@@ -321,15 +321,49 @@ void show_timerstats(int nostats, int ticktime)
 					wattron(timerstat_window, A_BOLD);
 				else
 					wattroff(timerstat_window, A_BOLD);
+#ifdef PLATFORM_NO_INT0
+                                if (strstr(lines[i].string, "<interrupt>") == 0) continue;
+#endif
 				if (showpids)
-					print(timerstat_window, i+1, 0," %5.1f%% (%5.1f)   [%6s] %s \n", lines[i].count * 100.0 / linectotal,
-						lines[i].count * 1.0 / ticktime, 
+					print(timerstat_window, i+1, 0," %5.1f%% (%5.1f)   [%6s] %s \n", lines[i].count * 100.0 /
+#ifdef PLATFORM_NO_INT0
+						(int) total_interrupt,
+#else
+						(int) linectotal,
+#endif
+						lines[i].count * 1.0 / ticktime,
 						lines[i].pid, lines[i].string);
-				else
-					print(timerstat_window, i+1, 0," %5.1f%% (%5.1f)   %s \n", lines[i].count * 100.0 / linectotal,
-						lines[i].count * 1.0 / ticktime, 
+				else{
+					print(timerstat_window, i+1, 0," %5.1f%% (%5.1f)   %s \n", lines[i].count * 100.0 /
+#ifdef PLATFORM_NO_INT0
+						(int) total_interrupt,
+#else
+						(int) linectotal,
+#endif
+						lines[i].count * 1.0 / ticktime,
 						lines[i].string);
 				}
+			}
+#ifdef PLATFORM_NO_INT0
+		print(timerstat_window, i, 0, "\nTimer breakdown (dg_timer or gp_timer):\n");
+		for (i = 0; i < linehead; i++)
+			if (lines[i].count > 0 && counter++ < maxtimerstats) {
+				if ((lines[i].count * 1.0 / ticktime) >= 10.0)
+					wattron(timerstat_window, A_BOLD);
+				else
+					wattroff(timerstat_window, A_BOLD);
+                                if (strstr(lines[i].string, "<interrupt>") != 0) continue;
+
+				if (showpids)
+					print(timerstat_window, i+1, 0," %5.1f%% (%5.1f)   [%6s] %s \n", lines[i].count * 100.0 / (linectotal - (int) total_interrupt),
+						lines[i].count * 1.0 / ticktime,
+						lines[i].pid, lines[i].string);
+				else
+					print(timerstat_window, i+1, 0," %5.1f%% (%5.1f)   %s \n", lines[i].count * 100.0 / (linectotal - (int) total_interrupt),
+						lines[i].count * 1.0 / ticktime,
+						lines[i].string);
+		       }
+#endif
 	} else {
 		if (geteuid() == 0) {
 			print(timerstat_window, 0, 0, _("No detailed statistics available; please enable the CONFIG_TIMER_STATS kernel option\n"));

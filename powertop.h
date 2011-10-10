@@ -40,6 +40,7 @@ extern struct line     *lines;
 extern int             linehead;
 extern int             linesize;
 extern int             linectotal;
+extern int             total_interrupt;
 
 extern double displaytime;
 

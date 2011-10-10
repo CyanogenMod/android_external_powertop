@@ -78,7 +78,6 @@ int		linehead;
 int		linesize;
 int		linectotal;
 
-
 double last_bat_cap = 0;
 double prev_bat_cap = 0;
 time_t last_bat_time = 0;
@@ -139,8 +138,8 @@ void count_lines(void)
 	uint64_t q = 0;
 	int i;
 	for (i = 0; i < linehead; i++)
-		q += lines[i].count;
-	linectotal = q;
+	    q += lines[i].count;
+        linectotal = q;
 }
 
 int update_irq(int irq, uint64_t count, char *name)
@@ -228,8 +227,8 @@ static void do_proc_irq(void)
 			c = newc;
 		}
 		c = strchr(c, ' ');
-		if (!c) 
-			continue;
+		if (!c)
+		       continue;
 		while (c && *c == ' ')
 			c++;
 		if (!special) {
@@ -240,25 +239,32 @@ static void do_proc_irq(void)
 				c++;
 		}
 		name = c;
-		delta = update_irq(nr, count, name);
 		c = strchr(name, '\n');
 		if (c)
 			*c = 0;
+
+		delta = update_irq(nr, count, name);
 		if (strcmp(name, "i8042")) { 
-			if (special) 
-				sprintf(line2, _("   <kernel IPI> : %s"), name);
-			else
-				sprintf(line2, _("    <interrupt> : %s"), name);
+		        if (special)
+			        sprintf(line2, _("   <kernel IPI> : %s"), name);
+		        else
+			        sprintf(line2, _("    <interrupt> : %s"), name);
 		}
 		else
-			sprintf(line2, _("    <interrupt> : %s"), _("PS/2 keyboard/mouse/touchpad"));
-
+		  sprintf(line2, _("    <interrupt> : %s"), _("PS/2 keyboard/mouse/touchpad"));
+		//don't special-case interrupt 0 as it's not the system timer on Android
+#ifdef PLATFORM_NO_INT0
+		if (delta > 0)
+			push_line(line2, delta);
+		total_interrupt += delta;
+#else
 		if (nr > 0 && delta > 0)
 			push_line(line2, delta);
 		if (nr==0)
 			interrupt_0 = delta;
 		else
 			total_interrupt += delta;
+#endif
 	}
 	fclose(file);
 }
@@ -1027,7 +1033,9 @@ int main(int argc, char **argv)
 		}
 		if (file)
 			pclose(file);
-
+#ifdef PLATFORM_NO_INT0
+                totalevents = total_interrupt;
+#endif
 		if (strstr(line, "total events")) {
 			int d;
 			d = strtoull(line, NULL, 10) / sysconf(_SC_NPROCESSORS_ONLN);
