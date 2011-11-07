@@ -32,15 +32,17 @@
 
 #include "powertop.h"
 
+#define MAX_PSTATES 32
+
 struct cpufreqdata {
 	uint64_t	frequency;
 	uint64_t	count;
 };
 
-struct cpufreqdata freqs[16];
-struct cpufreqdata oldfreqs[16];
+struct cpufreqdata freqs[MAX_PSTATES];
+struct cpufreqdata oldfreqs[MAX_PSTATES];
 
-struct cpufreqdata delta[16];
+struct cpufreqdata delta[MAX_PSTATES];
 
 char cpufreqstrings[6][80];
 int topfreq = -1;
@@ -100,7 +102,7 @@ void  do_cpufreq_stats(void)
 	memset(&cpufreqstrings, 0, sizeof(cpufreqstrings));
 	sprintf(cpufreqstrings[0], _("P-states (frequencies)\n"));
 
-	for (ret = 0; ret<16; ret++)
+	for (ret = 0; ret<MAX_PSTATES; ret++)
 		freqs[ret].count = 0;
 
 	dir = opendir("/sys/devices/system/cpu");
@@ -139,7 +141,7 @@ void  do_cpufreq_stats(void)
 			if (f && maxfreq < i)
 				maxfreq = i;
 			i++;
-			if (i>15)
+			if (i>(MAX_PSTATES - 1))
 				break;
 		}
 		fclose(file);
@@ -147,7 +149,7 @@ void  do_cpufreq_stats(void)
 
 	closedir(dir);
 
-	for (ret = 0; ret < 16; ret++) {
+	for (ret = 0; ret < MAX_PSTATES; ret++) {
 		delta[ret].count = freqs[ret].count - oldfreqs[ret].count;
 		total_time += delta[ret].count;
 		delta[ret].frequency = freqs[ret].frequency;
