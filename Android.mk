@@ -10,7 +10,6 @@ LOCAL_CFLAGS += -DPATH_MAX=256
 ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
 	LOCAL_CFLAGS += -DPLATFORM_NO_INT0
 endif
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../kernel/include
 LOCAL_SRC_FILES := powertop.c \
 		   config.c \
 		   process.c \
