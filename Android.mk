@@ -26,7 +26,7 @@ LOCAL_SRC_FILES := powertop.c \
 		   urbnum.c \
 		   msmpmstats.c
 
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := debug
 LOCAL_MODULE_PATH := $(TARGET_OUT_EXECUTABLES)/
 include $(BUILD_EXECUTABLE)
 
