@@ -12,10 +12,12 @@ $(GEN_CSS_H):
 LOCAL_GENERATED_SOURCES += $(GEN_CSS_H)
 
 LOCAL_MODULE_TAGS := optional
-LOCAL_SHARED_LIBRARIES := libstlport \
-			  libnl
+LOCAL_SHARED_LIBRARIES := libstlport
 
-LOCAL_STATIC_LIBRARIES := libncurses
+LOCAL_SHARED_LIBRARIES += libncurses
+LOCAL_STATIC_LIBRARIES += libnl_2
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
 
 LOCAL_MODULE := powertop
 
@@ -34,12 +36,13 @@ LOCAL_C_INCLUDES += external/stlport/stlport/ \
 					external/stlport/stlport/stl \
 					external/stlport/stlport/using/h/ \
 					bionic \
-					external/libnl/include/ \
-					external/ncurses \
-					external/ncurses/lib \
-					external/ncurses/include \
-					external/ncurses/include/ncurses
+					external/libnl-headers/ \
+					external/libncurses \
+					external/libncurses/lib \
+					external/libncurses/include \
+					external/libncurses/include/ncurses
 
+LOCAL_CFLAGS += -DCONFIG_LIBNL20
 ifneq ($(TARGET_ARCH),arm)
 LOCAL_SHARED_LIBRARIES += libpci
 else #TARGET_ARCH != arm
