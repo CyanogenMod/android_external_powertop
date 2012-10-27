@@ -56,6 +56,8 @@ int topcstate = 0;
 int dump = 0;
 int reset_pm_stats = 0;
 
+static int cpu_count = 0;
+
 #define IRQCOUNT 150
 
 struct irqdata {
@@ -328,6 +330,7 @@ static void read_data_cpuidle(uint64_t * usage, uint64_t * duration)
 	char line[4096];
 	char filename[128], *f;
 	int len, clevel = 0;
+	int numcpus = 0;
 
 	memset(usage, 0, 64);
 	memset(duration, 0, 64);
@@ -343,8 +346,20 @@ static void read_data_cpuidle(uint64_t * usage, uint64_t * duration)
 
 		if (!isdigit(entry->d_name[3]))
 			continue;
-
-		len = sprintf(filename, "/sys/devices/system/cpu/%s/cpuidle",
+		len = snprintf(filename, 128, "/sys/devices/system/cpu/%s/online",
+			      entry->d_name);
+		file = fopen(filename, "r");
+		if (file) {
+			f = fgets(line, 4096, file);
+			fclose(file);
+			if (f != NULL) {
+				if (*f == '1')
+					numcpus++;
+				else
+					continue;
+			}
+		}
+		len = snprintf(filename, 128, "/sys/devices/system/cpu/%s/cpuidle",
 			      entry->d_name);
 
 		dir = opendir(filename);
@@ -424,6 +439,8 @@ static void read_data_cpuidle(uint64_t * usage, uint64_t * duration)
 
 	}
 	closedir(cpudir);
+	if (numcpus)
+		cpu_count = numcpus;
 }
 
 static void read_data(uint64_t * usage, uint64_t * duration)
@@ -878,6 +895,7 @@ int main(int argc, char **argv)
 		struct timeval tv;
 		int key;
 
+		int num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
 		int i = 0;
 		double c0 = 0;
 		char *c;
@@ -932,13 +950,15 @@ int main(int argc, char **argv)
 		if (totalevents == 0 && maxcstate <= 1) {
 			sprintf(cstate_lines[5],_("< Detailed C-state information is not available.>\n"));
 		} else {
-			double sleept, percentage;;
-			c0 = sysconf(_SC_NPROCESSORS_ONLN) * ticktime * 1000 * FREQ - totalticks;
+			double sleept, percentage;
+			if (cpu_count)
+				num_cpus = cpu_count;
+			c0 = num_cpus * ticktime * 1000 * FREQ - totalticks;
 			if (c0 < 0)
 				c0 = 0;	/* rounding errors in measurement might make c0 go slightly negative.. this is confusing */
 			sprintf(cstate_lines[0], _("Cn\t          Avg residency\n"));
 
-			percentage = c0 * 100.0 / (sysconf(_SC_NPROCESSORS_ONLN) * ticktime * 1000 * FREQ);
+			percentage = c0 * 100.0 / (num_cpus * ticktime * 1000 * FREQ);
 			sprintf(cstate_lines[1], _("C0 (cpu running)        (%4.1f%%)\n"), percentage);
 			if (percentage > 50)
 				topcstate = 0;
@@ -948,7 +968,7 @@ int main(int argc, char **argv)
 											+ 0.1) / FREQ;
 					percentage = (cur_duration[i] -
 					      last_duration[i]) * 100 /
-					     (sysconf(_SC_NPROCESSORS_ONLN) * ticktime * 1000 * FREQ);
+					     (num_cpus * ticktime * 1000 * FREQ);
 
 					if (cnames[i][0]==0)
 						sprintf(cnames[i],"C%i",i+1);
@@ -1038,9 +1058,9 @@ int main(int argc, char **argv)
 #endif
 		if (strstr(line, "total events")) {
 			int d;
-			d = strtoull(line, NULL, 10) / sysconf(_SC_NPROCESSORS_ONLN);
+			d = strtoull(line, NULL, 10) / num_cpus;
 			if (totalevents == 0) { /* No c-state info available, use timerstats instead */
-				totalevents = d * sysconf(_SC_NPROCESSORS_ONLN) + total_interrupt;
+				totalevents = d * num_cpus + total_interrupt;
 				if (d < interrupt_0)
 					totalevents += interrupt_0 - d;
 			}
@@ -1050,8 +1070,8 @@ int main(int argc, char **argv)
 
 	
 		if (totalevents && ticktime) {
-			wakeups_per_second = totalevents * 1.0 / ticktime / sysconf(_SC_NPROCESSORS_ONLN);
-			show_wakeups(wakeups_per_second, ticktime, c0 * 100.0 / (sysconf(_SC_NPROCESSORS_ONLN) * ticktime * 1000 * FREQ) );
+			wakeups_per_second = totalevents * 1.0 / ticktime / num_cpus;
+			show_wakeups(wakeups_per_second, ticktime, c0 * 100.0 / (num_cpus * ticktime * 1000 * FREQ));
 		}
 		count_usb_urbs();
 		print_battery_sysfs();
