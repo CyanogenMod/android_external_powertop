@@ -40,11 +40,11 @@ LOCAL_C_INCLUDES += external/stlport/stlport/ \
 					external/ncurses/include \
 					external/ncurses/include/ncurses
 
-ifneq ($(TARGET_ARCH),arm)
+ifeq ($(TARGET_ARCH),x86)
 LOCAL_SHARED_LIBRARIES += libpci
-else #TARGET_ARCH != arm
+else
 LOCAL_CPPFLAGS += -DDISABLE_PCI
-endif #TARGET_ARCH == arm
+endif 
 
 LOCAL_SRC_FILES += \
 	parameters/parameters.cpp \
