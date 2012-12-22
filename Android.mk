@@ -13,7 +13,7 @@ LOCAL_GENERATED_SOURCES += $(GEN_CSS_H)
 
 LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES := libstlport \
-			  libnl
+			  libnl_2
 
 LOCAL_STATIC_LIBRARIES := libncurses
 
@@ -21,6 +21,7 @@ LOCAL_MODULE := powertop
 
 #LOCAL_CFLAGS += -Wall -O2 -g -fno-omit-frame-pointer -fstack-protector -Wshadow -Wformat -D_FORTIFY_SOURCE=2
 #LOCAL_CPPFLAGS += -Wall -O2 -g -fno-omit-frame-pointer
+LOCAL_CFLAGS += -DCONFIG_LIBNL20
 LOCAL_CPPFLAGS += \
 		-DDISABLE_I18N \
 		-DDISABLE_TRYCATCH \
@@ -31,20 +32,17 @@ LOCAL_CPPFLAGS += \
 		-DDEFINE_ETHTOOL_CMD \
 
 LOCAL_C_INCLUDES += external/stlport/stlport/ \
-					external/stlport/stlport/stl \
-					external/stlport/stlport/using/h/ \
-					bionic \
-					external/libnl/include/ \
-					external/ncurses \
-					external/ncurses/lib \
-					external/ncurses/include \
-					external/ncurses/include/ncurses
+		    external/stlport/stlport/stl \
+		    external/stlport/stlport/using/h/ \
+		    bionic \
+		    external/libnl-headers \
+		    external/libncurses/include 
 
-ifneq ($(TARGET_ARCH),arm)
+ifeq ($(TARGET_ARCH),x86)
 LOCAL_SHARED_LIBRARIES += libpci
-else #TARGET_ARCH != arm
+else
 LOCAL_CPPFLAGS += -DDISABLE_PCI
-endif #TARGET_ARCH == arm
+endif 
 
 LOCAL_SRC_FILES += \
 	parameters/parameters.cpp \
