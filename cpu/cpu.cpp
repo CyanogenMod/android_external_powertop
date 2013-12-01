@@ -245,7 +245,7 @@ void enumerate_cpus(void)
 	ifstream file;	
 	char line[1024];
 
-	int number = -1;
+	int number = 0;
 	char vendor[128];
 	int family = 0;
 	int model = 0;
