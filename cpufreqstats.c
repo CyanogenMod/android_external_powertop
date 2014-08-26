@@ -33,18 +33,18 @@
 #include "powertop.h"
 
 #define MAX_PSTATES 32
-
+#define MAX_CPUS 8
 struct cpufreqdata {
 	uint64_t	frequency;
 	uint64_t	count;
 };
 
-struct cpufreqdata freqs[MAX_PSTATES];
-struct cpufreqdata oldfreqs[MAX_PSTATES];
+struct cpufreqdata freqs[MAX_CPUS][MAX_PSTATES];
+struct cpufreqdata oldfreqs[MAX_CPUS][MAX_PSTATES];
 
-struct cpufreqdata delta[MAX_PSTATES];
+struct cpufreqdata delta[MAX_CPUS][MAX_PSTATES];
 
-char cpufreqstrings[6][80];
+char cpufreqstrings[25][256];
 int topfreq = -1;
 
 static void zap(void)
@@ -94,16 +94,19 @@ void  do_cpufreq_stats(void)
 	char filename[PATH_MAX];
 	char line[1024];
 
-	int ret = 0;
+	int cpu = -1;
+	int ret, cpucount;
 	int maxfreq = 0;
-	uint64_t total_time = 0;
+	uint64_t total_time[MAX_CPUS] = {0};
 
 	memcpy(&oldfreqs, &freqs, sizeof(freqs));
 	memset(&cpufreqstrings, 0, sizeof(cpufreqstrings));
 	sprintf(cpufreqstrings[0], _("P-states (frequencies)\n"));
 
-	for (ret = 0; ret<MAX_PSTATES; ret++)
-		freqs[ret].count = 0;
+	for (ret = 0; ret<MAX_PSTATES; ret++) {
+		for (cpucount = 0; cpucount < MAX_CPUS; cpucount++)
+			freqs[cpucount][ret].count = 0;
+	}
 
 	dir = opendir("/sys/devices/system/cpu");
 	if (!dir)
@@ -118,7 +121,9 @@ void  do_cpufreq_stats(void)
 		if (!file)
 			continue;
 		memset(line, 0, 1024);
-
+		cpu++;
+		if ( cpu >= MAX_CPUS)
+			cpu = MAX_CPUS -1;
 		i = 0;
 		while (!feof(file)) {
 			uint64_t f,count;
@@ -130,13 +135,13 @@ void  do_cpufreq_stats(void)
 				break;
 			count = strtoull(c, NULL, 10);
 
-			if (freqs[i].frequency && freqs[i].frequency != f) {
+			if (freqs[cpu][i].frequency && freqs[cpu][i].frequency != f) {
 				zap();
 				break;
 			}
 
-			freqs[i].frequency = f;
-			freqs[i].count += count;
+			freqs[cpu][i].frequency = f;
+			freqs[cpu][i].count += count;
 
 			if (f && maxfreq < i)
 				maxfreq = i;
@@ -150,27 +155,40 @@ void  do_cpufreq_stats(void)
 	closedir(dir);
 
 	for (ret = 0; ret < MAX_PSTATES; ret++) {
-		delta[ret].count = freqs[ret].count - oldfreqs[ret].count;
-		total_time += delta[ret].count;
-		delta[ret].frequency = freqs[ret].frequency;
-		if (freqs[ret].frequency != oldfreqs[ret].frequency)
-			return;  /* duff data */
+		for (cpucount = 0; cpucount < MAX_CPUS; cpucount++) {
+			delta[cpucount][ret].count = freqs[cpucount][ret].count - oldfreqs[cpucount][ret].count;
+			total_time[cpucount] += delta[cpucount][ret].count;
+			delta[cpucount][ret].frequency = freqs[cpucount][ret].frequency;
+			if (freqs[cpucount][ret].frequency != oldfreqs[cpucount][ret].frequency)
+				return;  /* duff data */
+		}
 	}
 
-
-	if (!total_time)
+	for (cpucount = 0 ; cpucount < MAX_CPUS; cpucount++) {
+		if (total_time[cpucount])
+			break;
+	}
+	if (cpucount == MAX_CPUS)
 		return;
 
-	qsort(&delta, maxfreq+1, sizeof(struct cpufreqdata), sort_by_count);
-	if (maxfreq>4)
-		maxfreq=4;
-	qsort(&delta, maxfreq+1, sizeof(struct cpufreqdata), sort_by_freq);
-
 	topfreq = -1;
+
 	for (ret = 0 ; ret<=maxfreq; ret++) {
-		sprintf(cpufreqstrings[ret+1], "%6s   %5.1f%%\n", HzToHuman(delta[ret].frequency), delta[ret].count * 100.0 / total_time);
-		if (delta[ret].count > total_time/2)
-			topfreq = ret;
+	uint64_t last_freq = -1;
+	strlcpy(cpufreqstrings[ret+1], " ",sizeof(cpufreqstrings[ret+1]));
+		for ( cpucount = 0; cpucount <= cpu; cpucount++) {
+			char temp_freq[32];
+			if (delta[cpucount][ret].frequency != last_freq && delta[cpucount][ret].frequency != 0) {
+				snprintf(temp_freq, sizeof(temp_freq), "%6s", HzToHuman(delta[cpucount][ret].frequency));
+				strncat(cpufreqstrings[ret+1], temp_freq, 32);
+				last_freq = delta[cpucount][ret].frequency;
+			}
+			snprintf(temp_freq, sizeof(temp_freq), "\t%5.1f%% ", delta[cpucount][ret].count * 100.0 / total_time[cpucount]);
+			strncat(cpufreqstrings[ret+1], temp_freq, 32);
+			if (delta[cpucount][ret].count > total_time[cpucount]/2)
+				topfreq = ret;
+		}
+		strncat(cpufreqstrings[ret+1], "\n", 1);
 	}
 
 }
