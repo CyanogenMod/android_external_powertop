@@ -4,7 +4,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE:= powertop
-LOCAL_CFLAGS += -DNO_NCURSES
+#LOCAL_CFLAGS += -DNO_NCURSES
 LOCAL_CFLAGS += -DNO_SUGGESTIONS
 LOCAL_CFLAGS += -DPATH_MAX=256
 ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
@@ -25,6 +25,9 @@ LOCAL_SRC_FILES := powertop.c \
 		   usb.c \
 		   urbnum.c \
 		   msmpmstats.c
+
+LOCAL_C_INCLUDES := external/libncurses/include
+LOCAL_SHARED_LIBRARIES := libncurses
 
 LOCAL_MODULE_TAGS := debug
 LOCAL_MODULE_PATH := $(TARGET_OUT_EXECUTABLES)/
