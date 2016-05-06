@@ -1,4 +1,4 @@
-ifeq ($(TARGET_ARCH),arm)
+ifeq ($(call match-word-in-list,$(TARGET_ARCH),arm arm64),true)
 
 LOCAL_PATH := $(call my-dir)
 
